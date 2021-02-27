@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -35,7 +35,6 @@ static unsigned int freq_table_len[NR_CPUS], freq_table_set[NR_CPUS];
 static unsigned int voltage_table_set[NR_CPUS];
 static unsigned int *freq_table_ptr[NR_CPUS];
 static DEFINE_MUTEX(ioctl_access_mutex);
-static uint32_t *voltage_table_ptr[NR_CPUS];
 
 static int msm_thermal_ioctl_open(struct inode *node, struct file *filep)
 {

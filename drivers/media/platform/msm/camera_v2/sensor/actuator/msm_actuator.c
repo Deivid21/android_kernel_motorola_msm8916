@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -697,98 +697,6 @@ static int32_t msm_actuator_move_focus(
 	a_ctrl->i2c_tbl_index = 0;
 	CDBG("Exit\n");
 
-	return rc;
-}
-
-static int32_t msm_actuator_bivcm_move_focus(
-	struct msm_actuator_ctrl_t *a_ctrl,
-	struct msm_actuator_move_params_t *move_params)
-{
-	int32_t rc = 0;
-	struct damping_params_t ringing_params_kernel;
-	int8_t sign_dir = move_params->sign_dir;
-	uint16_t step_boundary = 0;
-	uint16_t target_step_pos = 0;
-	uint16_t target_lens_pos = 0;
-	int16_t dest_step_pos = move_params->dest_step_pos;
-	uint16_t curr_lens_pos = 0;
-	int dir = move_params->dir;
-	int32_t num_steps = move_params->num_steps;
-
-	if (copy_from_user(&ringing_params_kernel,
-		&(move_params->ringing_params[a_ctrl->curr_region_index]),
-		sizeof(struct damping_params_t))) {
-		pr_err("copy_from_user failed\n");
-		return -EFAULT;
-	}
-
-
-	CDBG("called, dir %d, num_steps %d\n", dir, num_steps);
-
-	if (dest_step_pos == a_ctrl->curr_step_pos)
-		return rc;
-
-	if ((sign_dir > MSM_ACTUATOR_MOVE_SIGNED_NEAR) ||
-		(sign_dir < MSM_ACTUATOR_MOVE_SIGNED_FAR)) {
-		pr_err("Invalid sign_dir = %d\n", sign_dir);
-		return -EFAULT;
-	}
-	if ((dir > MOVE_FAR) || (dir < MOVE_NEAR)) {
-		pr_err("Invalid direction = %d\n", dir);
-		return -EFAULT;
-	}
-	if (dest_step_pos > a_ctrl->total_steps) {
-		pr_err("Step pos greater than total steps = %d\n",
-		dest_step_pos);
-		return -EFAULT;
-	}
-	curr_lens_pos = a_ctrl->step_position_table[a_ctrl->curr_step_pos];
-	a_ctrl->i2c_tbl_index = 0;
-	CDBG("curr_step_pos =%d dest_step_pos =%d curr_lens_pos=%d\n",
-		a_ctrl->curr_step_pos, dest_step_pos, curr_lens_pos);
-
-	while (a_ctrl->curr_step_pos != dest_step_pos) {
-		if (a_ctrl->curr_region_index >= a_ctrl->region_size)
-			break;
-
-		step_boundary =
-			a_ctrl->region_params[a_ctrl->curr_region_index].
-			step_bound[dir];
-		if ((dest_step_pos * sign_dir) <=
-			(step_boundary * sign_dir)) {
-
-			target_step_pos = dest_step_pos;
-			target_lens_pos =
-				a_ctrl->step_position_table[target_step_pos];
-			rc = msm_actuator_bivcm_write_focus(a_ctrl,
-				curr_lens_pos,
-				&ringing_params_kernel,
-				sign_dir,
-				target_lens_pos);
-			if (rc < 0)
-				return rc;
-			curr_lens_pos = target_lens_pos;
-		} else {
-			target_step_pos = step_boundary;
-			target_lens_pos =
-				a_ctrl->step_position_table[target_step_pos];
-			rc = msm_actuator_bivcm_write_focus(a_ctrl,
-				curr_lens_pos,
-				&ringing_params_kernel,
-				sign_dir,
-				target_lens_pos);
-			if (rc < 0)
-				return rc;
-			curr_lens_pos = target_lens_pos;
-
-			a_ctrl->curr_region_index += sign_dir;
-		}
-		a_ctrl->curr_step_pos = target_step_pos;
-	}
-
-	move_params->curr_lens_pos = curr_lens_pos;
-	a_ctrl->i2c_tbl_index = 0;
-	CDBG("Exit\n");
 	return rc;
 }
 
